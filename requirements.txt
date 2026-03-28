@@ -1,0 +1,57 @@
+# ESP32 Headlight Glare Detection System
+# Requirements File
+
+# =========================
+# SOFTWARE REQUIREMENTS
+# =========================
+
+Arduino IDE (version 1.8.x or above)
+
+ESP32 Board Package
+URL: https://dl.espressif.com/dl/package_esp32_index.json
+
+Required Arduino Libraries:
+- None (uses built-in functions)
+
+USB Drivers (if required for your ESP32 board)
+
+
+# =========================
+# HARDWARE REQUIREMENTS
+# =========================
+
+Core Components:
+- ESP32 Development Board
+- LDR (Light Dependent Resistor)
+- 10kΩ Resistor
+- LED (any color)
+- 220Ω Resistor (for LED)
+- Buzzer (active or passive)
+
+Optional Components:
+- Breadboard
+- Jumper Wires
+- USB Cable (for ESP32 power & programming)
+
+Optional Enhancements:
+- OLED Display (I2C, e.g., SSD1306)
+- Second LDR (for directional detection)
+
+
+# =========================
+# SYSTEM REQUIREMENTS
+# =========================
+
+- Computer/Laptop
+- USB Port
+- Operating System:
+  - Windows / macOS / Linux
+
+
+# =========================
+# NOTES
+# =========================
+
+- No external libraries required
+- Ensure ESP32 drivers are properly installed
+- Use Arduino IDE Serial Monitor at 115200 baud rate
