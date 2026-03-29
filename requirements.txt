@@ -1,19 +1,19 @@
-# ESP32 Headlight Glare Detection System
+# ESP32-CAM Headlight Glare Detection System
 # Requirements File
 
 # =========================
 # SOFTWARE REQUIREMENTS
 # =========================
 
-Arduino IDE (version 1.8.x or above)
+Arduino IDE (version 1.8.x or above OR Arduino IDE 2.x)
 
-ESP32 Board Package
+ESP32 Board Package (Espressif Systems)
 URL: https://dl.espressif.com/dl/package_esp32_index.json
 
 Required Arduino Libraries:
-- None (uses built-in functions)
+- esp_camera.h (included with ESP32 board package)
 
-USB Drivers (if required for your ESP32 board)
+USB-to-Serial Drivers (for FTDI / programmer, if required)
 
 
 # =========================
@@ -21,21 +21,22 @@ USB Drivers (if required for your ESP32 board)
 # =========================
 
 Core Components:
-- ESP32 Development Board
-- LDR (Light Dependent Resistor)
-- 10kΩ Resistor
-- LED (any color)
-- 220Ω Resistor (for LED)
-- Buzzer (active or passive)
+- ESP32-CAM (AI Thinker module recommended)
+- FTDI Programmer / USB-to-Serial Module
+- Jumper Wires
+
+Optional Output Components:
+- LED (for glare indication)
+- Buzzer (for alert system)
 
 Optional Components:
 - Breadboard
-- Jumper Wires
-- USB Cable (for ESP32 power & programming)
+- External Power Supply (5V recommended for stability)
 
 Optional Enhancements:
+- Relay Module (for automatic headlight dimming)
 - OLED Display (I2C, e.g., SSD1306)
-- Second LDR (for directional detection)
+- WiFi-enabled monitoring device (phone/laptop)
 
 
 # =========================
@@ -52,6 +53,9 @@ Optional Enhancements:
 # NOTES
 # =========================
 
-- No external libraries required
-- Ensure ESP32 drivers are properly installed
+- No external libraries required beyond ESP32 package
+- esp_camera.h comes pre-installed with ESP32 board package
+- Ensure stable 5V power supply for ESP32-CAM
+- GPIO0 must be connected to GND during upload mode
 - Use Arduino IDE Serial Monitor at 115200 baud rate
+- Remove GPIO0 from GND after uploading code

@@ -1,88 +1,110 @@
-// Pin Definitions
-const int ldrPin = 34;
-const int ledPin = 2;
-const int buzzerPin = 4;
+#include "esp_camera.h"
 
-// Variables
-int ldrValue = 0;
-int smoothedValue = 0;
-int ambientLight = 0;
+// =================== CAMERA PIN DEFINITIONS ===================
+// AI Thinker ESP32-CAM
+#define PWDN_GPIO_NUM     32
+#define RESET_GPIO_NUM    -1
+#define XCLK_GPIO_NUM      0
+#define SIOD_GPIO_NUM     26
+#define SIOC_GPIO_NUM     27
 
-// Settings
-int sampleCount = 10;          // for averaging
-int baseThreshold = 500;       // base offset above ambient
-int mediumOffset = 800;
-int highOffset = 1200;
+#define Y9_GPIO_NUM       35
+#define Y8_GPIO_NUM       34
+#define Y7_GPIO_NUM       39
+#define Y6_GPIO_NUM       36
+#define Y5_GPIO_NUM       21
+#define Y4_GPIO_NUM       19
+#define Y3_GPIO_NUM       18
+#define Y2_GPIO_NUM        5
+#define VSYNC_GPIO_NUM    25
+#define HREF_GPIO_NUM     23
+#define PCLK_GPIO_NUM     22
 
-// Timing
-unsigned long lastAmbientUpdate = 0;
-int ambientInterval = 3000;    // update ambient every 3 sec
+// =================== SETTINGS ===================
+#define BRIGHT_PIXEL_THRESHOLD 230   // pixel brightness threshold
+#define BRIGHT_PIXEL_COUNT 500       // number of bright pixels needed
+#define ALERT_PIN 4                 // onboard flash LED
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("\nStarting Headlight Glare Detection...");
 
-  pinMode(ledPin, OUTPUT);
-  pinMode(buzzerPin, OUTPUT);
+  pinMode(ALERT_PIN, OUTPUT);
+  digitalWrite(ALERT_PIN, LOW);
 
-  digitalWrite(ledPin, LOW);
-  digitalWrite(buzzerPin, LOW);
+  camera_config_t config;
+  config.ledc_channel = LEDC_CHANNEL_0;
+  config.ledc_timer   = LEDC_TIMER_0;
+  config.pin_d0       = Y2_GPIO_NUM;
+  config.pin_d1       = Y3_GPIO_NUM;
+  config.pin_d2       = Y4_GPIO_NUM;
+  config.pin_d3       = Y5_GPIO_NUM;
+  config.pin_d4       = Y6_GPIO_NUM;
+  config.pin_d5       = Y7_GPIO_NUM;
+  config.pin_d6       = Y8_GPIO_NUM;
+  config.pin_d7       = Y9_GPIO_NUM;
+  config.pin_xclk     = XCLK_GPIO_NUM;
+  config.pin_pclk     = PCLK_GPIO_NUM;
+  config.pin_vsync    = VSYNC_GPIO_NUM;
+  config.pin_href     = HREF_GPIO_NUM;
+  config.pin_sscb_sda = SIOD_GPIO_NUM;
+  config.pin_sscb_scl = SIOC_GPIO_NUM;
+  config.pin_pwdn     = PWDN_GPIO_NUM;
+  config.pin_reset    = RESET_GPIO_NUM;
+  config.xclk_freq_hz = 20000000;
+
+  // Use grayscale to save memory
+  config.pixel_format = PIXFORMAT_GRAYSCALE;
+
+  config.frame_size   = FRAMESIZE_QQVGA; // 160x120
+  config.jpeg_quality = 12;
+  config.fb_count     = 1;
+
+  // Init camera
+  esp_err_t err = esp_camera_init(&config);
+  if (err != ESP_OK) {
+    Serial.printf("Camera init failed: 0x%x\n", err);
+    return;
+  }
+
+  Serial.println("Camera initialized successfully!");
 }
 
 void loop() {
+  camera_fb_t *fb = esp_camera_fb_get();
 
-  // -------- 1. Noise Filtering (Averaging) --------
-  int total = 0;
-  for (int i = 0; i < sampleCount; i++) {
-    total += analogRead(ldrPin);
-    delay(5);
-  }
-  smoothedValue = total / sampleCount;
-
-  // -------- 2. Adaptive Ambient Light --------
-  if (millis() - lastAmbientUpdate > ambientInterval) {
-    ambientLight = smoothedValue;
-    lastAmbientUpdate = millis();
+  if (!fb) {
+    Serial.println("Camera capture failed");
+    return;
   }
 
-  // Dynamic thresholds
-  int mediumThreshold = ambientLight + mediumOffset;
-  int highThreshold = ambientLight + highOffset;
+  uint8_t *img = fb->buf;
+  int len = fb->len;
 
-  // -------- 3. Glare Detection Levels --------
-  String glareLevel = "NORMAL";
+  int brightPixels = 0;
 
-  if (smoothedValue > highThreshold) {
-    glareLevel = "HIGH GLARE";
-  }
-  else if (smoothedValue > mediumThreshold) {
-    glareLevel = "MEDIUM GLARE";
+  // Count very bright pixels (glare spots)
+  for (int i = 0; i < len; i++) {
+    if (img[i] > BRIGHT_PIXEL_THRESHOLD) {
+      brightPixels++;
+    }
   }
 
-  // -------- 4. Output Control --------
-  if (glareLevel == "HIGH GLARE") {
-    digitalWrite(ledPin, HIGH);
-    digitalWrite(buzzerPin, HIGH);   // continuous beep
-  }
-  else if (glareLevel == "MEDIUM GLARE") {
-    digitalWrite(ledPin, HIGH);
+  Serial.print("Bright Pixels: ");
+  Serial.println(brightPixels);
 
-    // slow beep
-    digitalWrite(buzzerPin, HIGH);
-    delay(100);
-    digitalWrite(buzzerPin, LOW);
-  }
-  else {
-    digitalWrite(ledPin, LOW);
-    digitalWrite(buzzerPin, LOW);
+  // Glare detection logic
+  if (brightPixels > BRIGHT_PIXEL_COUNT) {
+    Serial.println("⚠️ HEADLIGHT GLARE DETECTED!");
+
+    digitalWrite(ALERT_PIN, HIGH);  // Turn ON LED
+  } else {
+    Serial.println("No glare");
+
+    digitalWrite(ALERT_PIN, LOW);   // Turn OFF LED
   }
 
-  // -------- 5. Serial Monitor Output --------
-  Serial.print("Raw: ");
-  Serial.print(smoothedValue);
-  Serial.print(" | Ambient: ");
-  Serial.print(ambientLight);
-  Serial.print(" | Level: ");
-  Serial.println(glareLevel);
+  esp_camera_fb_return(fb);
 
-  delay(200);
+  delay(300);
 }

@@ -1,135 +1,143 @@
 # 🔌 Hardware Setup Guide  
-## ESP32 Headlight Glare Detection System
+## ESP32-CAM Headlight Glare Detection System (Vision-Based)
 
-This guide explains how to connect all hardware components required for the project.
+This guide explains how to connect all hardware components required for the ESP32-CAM based glare detection system.
 
 ---
 
 ## 🧰 Components Used
-- ESP32 Development Board  
-- LDR (Light Dependent Resistor)  
-- 10kΩ Resistor  
-- LED  
-- 220Ω Resistor (for LED safety)  
-- Buzzer  
-- Breadboard  
-- Jumper Wires  
+- ESP32-CAM (AI Thinker Module)
+- FTDI Programmer / USB-to-Serial Module
+- LED (optional)
+- Buzzer (optional)
+- Breadboard
+- Jumper Wires
 
 ---
 
 ## ⚙️ Overview
-The system works using an **LDR-based voltage divider** to measure light intensity.  
-The ESP32 reads this value and triggers outputs (LED + buzzer) when glare is detected.
+This system uses the ESP32-CAM module to capture images and detect headlight glare using brightness intensity analysis.
+
+Unlike LDR-based systems, no external light sensor is required.  
+All detection is done using the camera.
 
 ---
 
 ## 🔌 Circuit Connections
 
-### 1. LDR Connection (Voltage Divider)
+### 1. ESP32-CAM Programming Connections
 
-```
-3.3V ---- LDR ----+---- GPIO 34 (ESP32)
-                  |
-               10kΩ
-                  |
-                 GND
-```
+FTDI Programmer → ESP32-CAM  
+5V → 5V  
+GND → GND  
+TX → U0R  
+RX → U0T  
+GND → GPIO0 (ONLY during upload)
 
-### Steps:
-- Connect one leg of LDR → **3.3V**  
-- Connect other leg of LDR → **GPIO 34**  
-- Connect **10kΩ resistor** between GPIO 34 → **GND**
-
----
-
-### 2. LED Connection
-
-```
-GPIO 2 ---- 220Ω ---- LED ---- GND
-```
-
-### Steps:
-- Connect **GPIO 2 → 220Ω resistor → LED anode (+)**  
-- Connect LED cathode (–) → **GND**
+Steps:
+- Connect FTDI to ESP32-CAM as shown above  
+- Connect GPIO0 to GND to enter flashing mode  
+- Upload code  
+- After upload:
+  - Remove GPIO0 from GND  
+  - Press RESET button  
 
 ---
 
-### 3. Buzzer Connection
+### 2. LED Connection (Optional Alert)
 
-```
-GPIO 4 ---- Buzzer ---- GND
-```
+GPIO 4 → LED → GND  
 
-### Steps:
-- Connect **GPIO 4 → Buzzer (+)**  
-- Connect Buzzer (–) → **GND**
+Steps:
+- Connect GPIO 4 → LED anode (+)  
+- Connect LED cathode (–) → GND  
+
+Note: GPIO 4 is also connected to onboard flash LED.
+
+---
+
+### 3. Buzzer Connection (Optional)
+
+GPIO 12 → Buzzer → GND  
+
+Steps:
+- Connect GPIO 12 → Buzzer (+)  
+- Connect Buzzer (–) → GND  
 
 ---
 
 ## 🧠 Pin Summary
 
-| Component | ESP32 Pin |
-|----------|----------|
-| LDR Output | GPIO 34 |
-| LED        | GPIO 2  |
-| Buzzer     | GPIO 4  |
+Component → ESP32-CAM Pin  
+Camera → Built-in  
+LED → GPIO 4  
+Buzzer → GPIO 12  
+Flash Mode → GPIO 0  
 
 ---
 
 ## ⚠️ Important Notes
 
-- GPIO 34 is **input-only** (perfect for LDR)
-- Always use a **resistor with LED** to avoid damage
-- Ensure all **GND connections are common**
-- Use **3.3V (NOT 5V)** for ESP32 safety
+- ESP32-CAM must be powered with 5V, not 3.3V  
+- GPIO0 → GND is ONLY for uploading code  
+- Remove GPIO0 connection before normal operation  
+- Ensure all GND connections are common  
+- Avoid using pins used by the camera internally  
 
 ---
 
 ## 🧪 Testing Steps
 
-1. Power the ESP32 via USB  
+1. Connect ESP32-CAM via FTDI  
 2. Upload the code  
-3. Open Serial Monitor (115200 baud)  
-4. Shine light on LDR:
-   - Low light → No output  
-   - Medium light → LED + slow buzzer  
-   - High light → LED + continuous buzzer  
+3. Remove GPIO0 from GND  
+4. Press RESET  
+5. Open Serial Monitor (115200 baud)  
+
+Test:
+- Dark environment → No glare detected  
+- Shine flashlight → Glare detected  
+- LED/Buzzer should activate  
 
 ---
 
 ## 💡 Tips for Better Performance
 
-- Place LDR inside a **small tube** to focus forward light  
-- Avoid ambient room lighting interference  
-- Test using phone flashlight or vehicle headlight  
+- Mount camera facing road direction  
+- Avoid direct sunlight into camera  
+- Use low-light/night conditions for testing  
+- Keep camera stable  
 
 ---
 
 ## 🚀 Optional Enhancements
 
-- Add second LDR (left/right detection)  
-- Add OLED display (I2C)  
-- Use enclosure for real-world testing  
+- Add relay module for automatic headlight dimming  
+- Add WiFi streaming for live monitoring  
+- Improve detection using object tracking  
+- Build enclosure for real-world deployment  
 
 ---
 
 ## 🛠️ Troubleshooting
 
-**No readings?**
-- Check wiring of LDR and resistor  
+Camera not working?
+- Check power supply (use stable 5V)
 
-**LED not glowing?**
-- Check polarity (+ / –)  
+Upload failed?
+- Ensure GPIO0 is connected to GND
 
-**Buzzer not working?**
-- Ensure correct type (active recommended)  
+No output?
+- Check Serial Monitor
+- Verify threshold values in code
 
-**Wrong readings?**
-- Recheck voltage divider connection  
+LED not working?
+- Check polarity and GPIO pin
+
+Random detection?
+- Adjust brightness threshold in code
 
 ---
 
 ## 📌 Conclusion
-Once connected correctly, the ESP32 will continuously monitor light intensity and detect headlight glare in real time.
-
----
+Once connected correctly, the ESP32-CAM will continuously capture frames and detect headlight glare using image processing in real time.
